@@ -133,15 +133,16 @@ function mimeFromExtension(filename: string): string {
  * Uses a temporary OfflineAudioContext for decoding without playback.
  */
 async function extractDuration(arrayBuffer: ArrayBuffer): Promise<number> {
+  // Create a temporary AudioContext just for decoding
+  const audioCtx = new AudioContext()
   try {
-    // Create a temporary AudioContext just for decoding
-    const audioCtx = new AudioContext()
     const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0))
     const duration = audioBuffer.duration
     await audioCtx.close()
     return duration
   } catch {
     // If we can't decode (e.g., format not supported), return 0
+    try { await audioCtx.close() } catch { /* ignore close error */ }
     return 0
   }
 }

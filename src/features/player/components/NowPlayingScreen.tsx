@@ -1,5 +1,7 @@
+import { useRef, useEffect } from 'react'
 import { usePlayer } from '@/hooks/usePlayer'
 import { useUIStore } from '@/stores/ui-store'
+import { getAnalyserData } from '@/stores/player-store'
 import { AlbumArt } from '@/components/ui/AlbumArt'
 import { TransportControls } from '@/components/ui/TransportControls'
 import { ProgressBar } from '@/components/ui/ProgressBar'
@@ -16,6 +18,103 @@ function formatProgress(seconds: number): string {
   const m = Math.floor(seconds / 60)
   const s = Math.floor(seconds % 60)
   return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+/**
+ * AudioVisualizer — Frequency bar visualizer using real-time analyser data.
+ *
+ * Renders 16 bars from the 128-bin Uint8Array (groups of 8 bins per bar).
+ * Uses direct DOM manipulation via refs to avoid React re-render overhead
+ * in the animation loop. Respects prefers-reduced-motion.
+ */
+function AudioVisualizer({ isPlaying }: { isPlaying: boolean }) {
+  const rafRef = useRef<number>(0)
+  const barRefs = useRef<(HTMLDivElement | null)[]>([])
+  const reducedMotion = useRef(false)
+
+  // Detect reduced-motion preference
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    reducedMotion.current = mq.matches
+    const handler = (e: MediaQueryListEvent) => {
+      reducedMotion.current = e.matches
+    }
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  // Animation loop
+  useEffect(() => {
+    if (!isPlaying) return
+
+    const animate = () => {
+      if (reducedMotion.current) {
+        // When reduced motion is preferred, keep bars at a subtle static height
+        for (let i = 0; i < 16; i++) {
+          const bar = barRefs.current[i]
+          if (bar) bar.style.height = '8%'
+        }
+        rafRef.current = requestAnimationFrame(animate)
+        return
+      }
+
+      const data = getAnalyserData()
+
+      // Group 128 bins into 16 bars (8 bins per bar, average)
+      for (let i = 0; i < 16; i++) {
+        let sum = 0
+        for (let j = 0; j < 8; j++) {
+          sum += data[i * 8 + j] ?? 0
+        }
+        // Average bin value (0–255) mapped to height 4%–100%
+        const avg = sum / 8
+        const heightPercent = 4 + (avg / 255) * 96
+        const bar = barRefs.current[i]
+        if (bar) {
+          bar.style.height = `${heightPercent}%`
+        }
+      }
+
+      rafRef.current = requestAnimationFrame(animate)
+    }
+
+    rafRef.current = requestAnimationFrame(animate)
+
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current)
+      }
+    }
+  }, [isPlaying])
+
+  // Reset bars to minimum height when playback stops
+  useEffect(() => {
+    if (!isPlaying) {
+      for (let i = 0; i < 16; i++) {
+        const bar = barRefs.current[i]
+        if (bar) bar.style.height = '4%'
+      }
+    }
+  }, [isPlaying])
+
+  return (
+    <div
+      className="flex items-end justify-center w-full max-w-sm h-16 gap-[3px]"
+      role="presentation"
+      aria-hidden="true"
+    >
+      {Array.from({ length: 16 }, (_, i) => (
+        <div
+          key={i}
+          ref={(el) => {
+            barRefs.current[i] = el
+          }}
+          className="w-1 rounded-full bg-accent-primary/40 transition-all duration-75 ease-out"
+          style={{ height: '4%' }}
+        />
+      ))}
+    </div>
+  )
 }
 
 /**
@@ -135,6 +234,9 @@ export function NowPlayingScreen() {
             {currentTrack.artist}
           </p>
         </div>
+
+        {/* Audio Visualizer — real-time frequency bars */}
+        <AudioVisualizer isPlaying={isPlaying} />
 
         {/* Progress Bar with time labels */}
         <div className="w-full max-w-sm flex flex-col gap-sp-2">

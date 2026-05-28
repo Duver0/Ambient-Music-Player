@@ -22,13 +22,13 @@ export function PwaUpdatePrompt() {
     // with hash routing we may need to poll)
     const interval = setInterval(() => {
       const current = getUpdateState()
-      if (current.available && !visible) {
+      if (current.available) {
         setVisible(true)
       }
     }, 30000) // check every 30s
 
     return () => clearInterval(interval)
-  }, [visible])
+  }, [])
 
   const handleUpdate = useCallback(async () => {
     setVisible(false)

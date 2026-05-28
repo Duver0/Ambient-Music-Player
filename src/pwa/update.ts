@@ -54,7 +54,9 @@ export async function registerSW(
       registration = registrations[0]
     } else {
       // Fallback: register manually if the plugin hasn't done so yet
-      registration = await navigator.serviceWorker.register('/sw.js')
+      // Use absolute URL with the project base path (/Ambient-Music-Player/)
+      const swUrl = new URL('/Ambient-Music-Player/sw.js', self.location.origin).href
+      registration = await navigator.serviceWorker.register(swUrl)
     }
 
     // Set up update detection

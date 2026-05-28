@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { AudioEngine } from '@/services/audio-engine'
 import type { AudioEngineState } from '@/services/audio-engine'
 import type { Track } from '@/types/track'
+import { useSettingsStore } from './settings-store'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -57,6 +58,11 @@ async function ensureEngineInitialized(): Promise<void> {
   if (!engineInitPromise) {
     engineInitPromise = audioEngine.init().then(() => {
       engineInitialized = true
+
+      // Sync crossfade settings from settings store to the engine
+      const settings = useSettingsStore.getState()
+      audioEngine.setCrossfadeEnabled(settings.crossfadeEnabled)
+      audioEngine.setCrossfadeDuration(settings.crossfadeDuration)
     })
   }
   await engineInitPromise
@@ -182,6 +188,9 @@ export const usePlayerStore = create<PlayerState>()(
         await ensureEngineInitialized()
         audioEngine.setVolume(get().volume)
 
+        // Keep engine's queue index in sync for preloading
+        audioEngine.setQueueIndex(nextIndex)
+
         set({
           queueIndex: nextIndex,
           currentTrack: nextTrack,
@@ -217,6 +226,9 @@ export const usePlayerStore = create<PlayerState>()(
         await ensureEngineInitialized()
         audioEngine.setVolume(get().volume)
 
+        // Keep engine's queue index in sync for preloading
+        audioEngine.setQueueIndex(prevIndex)
+
         set({
           queueIndex: prevIndex,
           currentTrack: prevTrack,
@@ -244,6 +256,10 @@ export const usePlayerStore = create<PlayerState>()(
 
       setQueue: (tracks, startIndex = 0) => {
         const track = tracks[startIndex]
+
+        // Sync queue with AudioEngine so preloading, next/previous work
+        audioEngine.setQueue(tracks, startIndex)
+
         set({
           queue: tracks,
           queueIndex: startIndex,
@@ -342,6 +358,19 @@ audioEngine.on('trackEnded', onTrackEnded)
 audioEngine.on('trackError', onTrackError)
 
 // ---------------------------------------------------------------------------
+// Engine time accessor — used by usePlayer hook for drift-free polling
+// ---------------------------------------------------------------------------
+
+/**
+ * Get the AudioEngine's current playback position in seconds.
+ * This reads the real Web Audio API clock, avoiding the drift bug from
+ * incrementing a local counter.
+ */
+export function getEngineTime(): number {
+  return audioEngine.getCurrentTime()
+}
+
+// ---------------------------------------------------------------------------
 // Bootstrap: ensure engine is initialized on first user interaction
 // ---------------------------------------------------------------------------
 
@@ -355,4 +384,17 @@ export async function initPlayerEngine(): Promise<void> {
   // Sync persisted volume to engine
   const { volume } = usePlayerStore.getState()
   audioEngine.setVolume(volume)
+}
+
+// ---------------------------------------------------------------------------
+// Analyser data — for UI visualizers
+// ---------------------------------------------------------------------------
+
+/**
+ * Get the current 128-bin frequency analyser data (0-255 each bin).
+ * Safe to call at any time; returns an empty array if engine not ready.
+ * Call this from a requestAnimationFrame loop in UI components.
+ */
+export function getAnalyserData(): Uint8Array {
+  return audioEngine.getAnalyserData()
 }

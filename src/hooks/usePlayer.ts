@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { usePlayerStore } from '@/stores/player-store'
+import { usePlayerStore, getEngineTime } from '@/stores/player-store'
 import type { Track } from '@/types/track'
 
 // ---------------------------------------------------------------------------
@@ -84,18 +84,10 @@ export function usePlayer(): PlayerAPI {
 
   useEffect(() => {
     if (isPlaying) {
-      // Start polling
+      // Start polling — read the real engine position to avoid clock drift
       intervalRef.current = setInterval(() => {
         const store = usePlayerStore.getState()
-
-        // Read from engine via the internal method (cheap, no re-render)
-        // We use the AudioEngine singleton's public API through the store.
-        // The store doesn't expose the engine, so we read from engine's
-        // exposed methods via a closure pattern.
-        // Instead, we increment from the store's own clock.
-        // A more accurate approach would be to import the AudioEngine singleton,
-        // but the store's _setCurrentTime is sufficient for UI updates.
-        store._setCurrentTime(store.currentTime + TIME_UPDATE_INTERVAL_MS / 1000)
+        store._setCurrentTime(getEngineTime())
       }, TIME_UPDATE_INTERVAL_MS)
     } else {
       // Stop polling

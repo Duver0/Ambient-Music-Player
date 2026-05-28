@@ -231,6 +231,10 @@ export class AudioEngine implements IAudioEngine {
   private boundVisibilityHandler: ((event: Event) => void) | null = null
   private boundContextStateHandler: ((state: string) => void) | null = null
 
+  // ── Crossfade ──────────────────────────────────────────────────────────
+  private _crossfadeEnabled: boolean = false
+  private _crossfadeDuration: number = 3 // seconds
+
   // ── Media Session ──────────────────────────────────────────────────────
   private mediaSessionSupported: boolean = false
   private positionStateInterval: ReturnType<typeof setInterval> | null = null
@@ -453,9 +457,17 @@ export class AudioEngine implements IAudioEngine {
 
   /**
    * Load and immediately start playing a track.
+   * If crossfade is enabled and a track is currently playing (not natural end),
+   * performs a fade-out → fade-in transition.
    */
   async playTrack(track: Track): Promise<void> {
-    // Stop current playback if any
+    // If crossfade is enabled and we have an active source, do crossfade
+    if (this._crossfadeEnabled && this.activeSource && this.state === 'playing') {
+      await this.crossfadeToNext(track)
+      return
+    }
+
+    // Normal (non-crossfade) path
     if (this.activeSource) {
       this.disconnectSource()
     }
@@ -532,6 +544,44 @@ export class AudioEngine implements IAudioEngine {
    */
   getVolume(): number {
     return this._volume
+  }
+
+  // ── Crossfade Configuration ────────────────────────────────────────────
+
+  /**
+   * Enable or disable crossfade between tracks.
+   */
+  setCrossfadeEnabled(enabled: boolean): void {
+    this._crossfadeEnabled = enabled
+  }
+
+  /**
+   * Whether crossfade is currently enabled.
+   */
+  getCrossfadeEnabled(): boolean {
+    return this._crossfadeEnabled
+  }
+
+  /**
+   * Set crossfade duration in seconds (clamped 0–30).
+   */
+  setCrossfadeDuration(duration: number): void {
+    this._crossfadeDuration = Math.max(0, Math.min(30, duration))
+  }
+
+  /**
+   * Get current crossfade duration in seconds.
+   */
+  getCrossfadeDuration(): number {
+    return this._crossfadeDuration
+  }
+
+  /**
+   * Sync the engine's internal queue index (used for preloading).
+   * Called by the player store after it advances the queue.
+   */
+  setQueueIndex(index: number): void {
+    this.queueIndex = index
   }
 
   /**
@@ -851,6 +901,60 @@ export class AudioEngine implements IAudioEngine {
   }
 
   // ────────────────────────────────────────────────────────────────────────
+  //  Private: Crossfade
+  // ────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Crossfade from the current track to a new track.
+   *
+   * Performs a fade-out of the current track over `_crossfadeDuration` seconds,
+   * then loads and starts the new track with a fade-in.
+   * This sequential approach avoids the complexity of overlapping two sources
+   * while still providing a smooth transition.
+   */
+  private async crossfadeToNext(track: Track): Promise<void> {
+    const playerGain = this.getPlayerGainNode()
+    const ctx = await audioContextManager.getContext()
+    const fadeDuration = this._crossfadeDuration
+
+    // ── Phase 1: Fade out current track ────────────────────────────────
+    if (playerGain && this.activeSource) {
+      const now = ctx.currentTime
+      playerGain.gain.cancelScheduledValues(now)
+      playerGain.gain.setValueAtTime(playerGain.gain.value, now)
+      playerGain.gain.linearRampToValueAtTime(0, now + fadeDuration)
+
+      // Wait for fade out to complete. The old source is still playing
+      // during this time, so the listener hears a smooth fade out.
+      await new Promise((resolve) => setTimeout(resolve, fadeDuration * 1000))
+    }
+
+    // ── Phase 2: Switch tracks ─────────────────────────────────────────
+    this.disconnectSource()
+    this._currentTime = 0
+
+    // Load the new track (will fetch + decode + cache if needed)
+    await this.loadTrackInternal(track)
+
+    // Ensure graph is set up (may have been torn down)
+    this.ensureGraph(ctx)
+
+    // Start the new source
+    await this.startSource(0)
+
+    // ── Phase 3: Fade in new track ─────────────────────────────────────
+    if (playerGain) {
+      const fadeInStart = ctx.currentTime
+      playerGain.gain.setValueAtTime(0, fadeInStart)
+      playerGain.gain.linearRampToValueAtTime(this._volume, fadeInStart + fadeDuration)
+    }
+
+    this.setupMediaSession()
+    this.startPositionStateUpdates()
+    this.setState('playing')
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
   //  Private: Media Session API
   // ────────────────────────────────────────────────────────────────────────
 
@@ -1062,19 +1166,18 @@ export class AudioEngine implements IAudioEngine {
   // ────────────────────────────────────────────────────────────────────────
 
   /**
-   * Handle natural track end — auto-advance to next track.
+   * Handle natural track end — emit event so the store can advance the queue.
+   *
+   * IMPORTANT: Does NOT call this.next() here. The store listens for 'trackEnded'
+   * and calls its own next(), which in turn calls engine.playTrack().
+   * Calling this.next() here AND emitting trackEnded would cause a double advance
+   * (Bug #4).
    */
   private handleTrackEnd(): void {
     this.disconnectSource()
+    this._currentTime = 0
     this.setState('ready')
     this.emitter.emit('trackEnded')
-
-    // Auto-advance to next track
-    this.next().catch(() => {
-      // If no next track, stop
-      this._currentTime = 0
-      this.setState('ready')
-    })
   }
 
   // ────────────────────────────────────────────────────────────────────────
