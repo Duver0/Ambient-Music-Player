@@ -73,10 +73,11 @@ export function PageShell({
         </>
       )}
 
-      {/* Bottom section: mini player takes precedence over bottom nav */}
+      {/* Bottom section: mini player above bottom nav (both visible when present) */}
       {!isKeyboardVisible && (
-        <div className="z-nav shrink-0">
-          {miniPlayer ?? bottomNav ?? null}
+        <div className="z-nav shrink-0 flex flex-col">
+          {miniPlayer}
+          {bottomNav}
         </div>
       )}
     </div>

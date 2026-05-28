@@ -54,11 +54,12 @@ export function AppShell() {
     navigate({ to: tab === 'player' ? '/' : `/${tab}`, replace: true })
   }
 
-  // Mini player replaces bottom nav when a track is playing and user is not
-  // on the player tab. Fullscreen hides everything.
+  // Bottom nav always visible (except fullscreen).
+  // Mini player appears ABOVE the bottom nav when a track is playing
+  // and the user is not on the player tab.
   const hasTrack = currentTrack !== null
+  const showBottomNav = !isFullscreen
   const showMiniPlayer = !isFullscreen && activeTab !== 'player' && hasTrack
-  const showBottomNav = !isFullscreen && !showMiniPlayer
 
   return (
     <PageShell
