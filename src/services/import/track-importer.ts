@@ -268,6 +268,10 @@ export async function importAudioFiles(
 /**
  * Open a native file picker and import selected audio files.
  *
+ * Uses extension-based accept (no MIME wildcard) to avoid issues
+ * with single-file restriction on iOS/mobile browsers.
+ * Detects cancel via window focus event.
+ *
  * Usage:
  *   ```ts
  *   const result = await openFilePicker((p) => setProgress(p))
@@ -277,16 +281,33 @@ export function openFilePicker(): Promise<FileList | null> {
   return new Promise((resolve) => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = 'audio/*,.mp3,.wav,.ogg,.flac,.m4a,.aac,.wma,.webm'
+    // Use only extensions (no audio/* MIME wildcard) to avoid
+    // single-file restriction on iOS and some mobile browsers
+    input.accept = '.mp3,.wav,.ogg,.flac,.m4a,.aac,.wma,.webm'
     input.multiple = true
 
-    input.onchange = () => {
-      resolve(input.files)
-    }
+    let resolved = false
 
-    input.oncancel = () => {
-      resolve(null)
+    // When files are selected (works with multi-select on all browsers)
+    input.addEventListener('change', () => {
+      if (resolved) return
+      resolved = true
+      window.removeEventListener('focus', onFocus)
+      resolve(input.files)
+    })
+
+    // Detect cancellation: when the window regains focus after
+    // the file dialog closes without selecting files
+    const onFocus = () => {
+      setTimeout(() => {
+        if (!resolved) {
+          resolved = true
+          window.removeEventListener('focus', onFocus)
+          resolve(null)
+        }
+      }, 300)
     }
+    window.addEventListener('focus', onFocus)
 
     input.click()
   })

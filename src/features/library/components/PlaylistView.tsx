@@ -14,12 +14,12 @@ import type { ImportResult } from '@/services/import/track-importer'
 
 type SortField = 'title' | 'artist' | 'addedAt' | 'lastPlayedAt' | 'duration'
 
-const SORT_OPTIONS: { value: SortField; label: string }[] = [
-  { value: 'title', label: 'Title' },
-  { value: 'artist', label: 'Artist' },
-  { value: 'addedAt', label: 'Date Added' },
-  { value: 'lastPlayedAt', label: 'Last Played' },
-  { value: 'duration', label: 'Duration' },
+const SORT_OPTIONS: { value: SortField; label: string; shortLabel: string }[] = [
+  { value: 'title', label: 'Title', shortLabel: 'A–Z' },
+  { value: 'artist', label: 'Artist', shortLabel: 'Artist' },
+  { value: 'addedAt', label: 'Date Added', shortLabel: 'Added' },
+  { value: 'lastPlayedAt', label: 'Last Played', shortLabel: 'Played' },
+  { value: 'duration', label: 'Duration', shortLabel: 'Length' },
 ]
 
 /**
@@ -133,10 +133,12 @@ export function PlaylistView() {
             variant={sortBy === option.value ? 'primary' : 'glass'}
             size="sm"
             onClick={() => toggleSort(option.value)}
+            className="shrink-0"
           >
-            {option.label}
+            <span className="hidden min-[420px]:inline truncate">{option.label}</span>
+            <span className="inline min-[420px]:hidden truncate">{option.shortLabel}</span>
             {sortBy === option.value && (
-              <span className="ml-1">
+              <span className="shrink-0">
                 {sortOrder === 'asc' ? '↑' : '↓'}
               </span>
             )}

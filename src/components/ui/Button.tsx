@@ -38,7 +38,7 @@ export function Button({
     <button
       disabled={disabled || loading}
       className={cn(
-        'relative inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all duration-200 select-none',
+        'relative inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all duration-200 select-none min-w-0 overflow-hidden',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary focus-visible:ring-offset-2 focus-visible:ring-offset-ambient-900',
         'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:brightness-100',
         'min-h-[44px] min-w-[44px]',

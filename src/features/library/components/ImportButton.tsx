@@ -95,8 +95,9 @@ export function ImportButton({
           'gap-sp-2',
         )}
       >
-        <DownloadIcon size={20} />
-        <span>{importing ? 'Importing...' : label}</span>
+        <DownloadIcon size={20} className="shrink-0" />
+        <span className="truncate hidden min-[420px]:inline">{importing ? 'Importing...' : label}</span>
+        <span className="truncate inline min-[420px]:hidden">{importing ? '...' : 'Add'}</span>
       </Button>
 
       {/* Progress or status message */}
