@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a0a0a"/>
+      <stop offset="100%" stop-color="#050505"/>
+    </linearGradient>
+    <linearGradient id="wave-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="64" fill="url(#bg-grad)"/>
+  <!-- Sound wave bars -->
+  <rect x="140" y="204" width="32" height="104" rx="12" fill="url(#wave-grad)" opacity="0.6">
+    <animate attributeName="height" values="104;156;104" dur="1.5s" repeatCount="indefinite"/>
+    <animate attributeName="y" values="204;178;204" dur="1.5s" repeatCount="indefinite"/>
+  </rect>
+  <rect x="196" y="168" width="32" height="176" rx="12" fill="url(#wave-grad)" opacity="0.8">
+    <animate attributeName="height" values="176;224;176" dur="1.2s" repeatCount="indefinite"/>
+    <animate attributeName="y" values="168;144;168" dur="1.2s" repeatCount="indefinite"/>
+  </rect>
+  <rect x="252" y="144" width="32" height="224" rx="12" fill="url(#wave-grad)">
+    <animate attributeName="height" values="224;184;224" dur="1s" repeatCount="indefinite"/>
+    <animate attributeName="y" values="144;164;144" dur="1s" repeatCount="indefinite"/>
+  </rect>
+  <rect x="308" y="168" width="32" height="176" rx="12" fill="url(#wave-grad)" opacity="0.8">
+    <animate attributeName="height" values="176;128;176" dur="1.3s" repeatCount="indefinite"/>
+    <animate attributeName="y" values="168;192;168" dur="1.3s" repeatCount="indefinite"/>
+  </rect>
+  <rect x="364" y="204" width="32" height="104" rx="12" fill="url(#wave-grad)" opacity="0.6">
+    <animate attributeName="height" values="104;152;104" dur="1.4s" repeatCount="indefinite"/>
+    <animate attributeName="y" values="204;180;204" dur="1.4s" repeatCount="indefinite"/>
+  </rect>
+  <!-- Glow circles behind waves -->
+  <circle cx="256" cy="256" r="160" fill="#6366f1" opacity="0.08"/>
+  <circle cx="256" cy="256" r="100" fill="#8b5cf6" opacity="0.06"/>
+</svg>
