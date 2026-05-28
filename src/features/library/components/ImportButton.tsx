@@ -1,5 +1,11 @@
 import { useState, useCallback, useRef } from 'react'
-import { openFilePicker, importAudioFiles, type ImportResult } from '@/services/import/track-importer'
+import {
+  openFilePicker,
+  openFolderPicker,
+  importAudioFiles,
+  filterAudioFiles,
+  type ImportResult,
+} from '@/services/import/track-importer'
 import { Button } from '@/components/ui/Button'
 import { DownloadIcon } from '@/components/ui/icons/DownloadIcon'
 import { cn } from '@/lib/cn'
@@ -15,10 +21,15 @@ interface ImportButtonProps {
   variant?: 'primary' | 'glass'
   /** Custom label text. */
   label?: string
+  /** Import mode: files or folder. */
+  mode?: 'files' | 'folder'
 }
 
 /**
- * ImportButton — Opens a file picker and imports audio files.
+ * ImportButton — Opens a file/folder picker and imports audio files.
+ *
+ * - `mode="files"`: opens multi-file picker for individual audio files
+ * - `mode="folder"`: opens directory picker (webkitdirectory) on supported browsers
  *
  * Shows loading state during import and calls onImportComplete when done.
  * Handles errors gracefully and reports per-file results.
@@ -28,63 +39,81 @@ export function ImportButton({
   className,
   block = false,
   variant = 'primary',
-  label = 'Import Music',
+  label,
+  mode = 'files',
 }: ImportButtonProps) {
   const [importing, setImporting] = useState(false)
   const [progress, setProgress] = useState<string | null>(null)
   const [result, setResult] = useState<ImportResult | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout>>(null)
 
+  // Default labels based on mode
+  const defaultLabel = mode === 'folder' ? 'Import Folder' : 'Choose Music Files'
+  const buttonLabel = label ?? defaultLabel
+
   const handleImport = useCallback(async () => {
     if (importing) return
 
     setImporting(true)
-    setProgress('Selecting files...')
+    setProgress(mode === 'folder' ? 'Selecting folder...' : 'Selecting files...')
     setResult(null)
 
     try {
-      // Open native file picker
-      const files = await openFilePicker()
+      // Open file or folder picker
+      const files = mode === 'folder'
+        ? await openFolderPicker()
+        : await openFilePicker()
+
       if (!files || files.length === 0) {
         setImporting(false)
         setProgress(null)
         return
       }
 
-      setProgress(`Importing ${files.length} file${files.length > 1 ? 's' : ''}...`)
+      // For folders, filter to audio files only
+      const audioFiles = mode === 'folder' ? filterAudioFiles(files) : Array.from(files)
 
-      // Import each file
-      const importResult = await importAudioFiles(files, (p) => {
+      if (audioFiles.length === 0) {
+        setProgress('No audio files found in this folder')
+        setImporting(false)
+        setTimeout(() => setProgress(null), 3000)
+        return
+      }
+
+      setProgress(`Importing ${audioFiles.length} file${audioFiles.length > 1 ? 's' : ''}...`)
+
+      const importResult = await importAudioFiles(audioFiles, (p) => {
         setProgress(`Importing ${p.current} of ${p.total}: ${p.fileName}`)
       })
+
+      // Log how many were skipped (non-audio files)
+      const skipped = Array.from(files).length - audioFiles.length
+      if (skipped > 0) {
+        console.debug(`[Importer] Skipped ${skipped} non-audio files from folder`)
+      }
 
       setResult(importResult)
       onImportComplete?.(importResult)
 
-      // Clear progress after 3 seconds on success
       if (importResult.errors.length === 0) {
         timerRef.current = setTimeout(() => {
           setProgress(null)
           setImporting(false)
         }, 3000)
       } else {
-        // Keep showing result if there were errors
         setImporting(false)
       }
     } catch (err) {
       setProgress(`Error: ${err instanceof Error ? err.message : 'Import failed'}`)
       setImporting(false)
-
-      // Clear error after 5 seconds
       timerRef.current = setTimeout(() => {
         setProgress(null)
       }, 5000)
     }
-  }, [importing, onImportComplete])
+  }, [importing, onImportComplete, mode])
 
   return (
     <div className={cn('flex flex-col items-center gap-sp-2', className)}>
-      {/* Import button */}
       <Button
         variant={variant}
         size={block ? 'lg' : 'md'}
@@ -96,8 +125,12 @@ export function ImportButton({
         )}
       >
         <DownloadIcon size={20} className="shrink-0" />
-        <span className="truncate hidden min-[420px]:inline">{importing ? 'Importing...' : label}</span>
-        <span className="truncate inline min-[420px]:hidden">{importing ? '...' : 'Add'}</span>
+        <span className="truncate hidden min-[420px]:inline">
+          {importing ? 'Importing...' : buttonLabel}
+        </span>
+        <span className="truncate inline min-[420px]:hidden">
+          {importing ? '...' : mode === 'folder' ? 'Folder' : 'Add'}
+        </span>
       </Button>
 
       {/* Progress or status message */}

@@ -265,30 +265,46 @@ export async function importAudioFiles(
   return result
 }
 
+// ---------------------------------------------------------------------------
+// Audio file detection
+// ---------------------------------------------------------------------------
+
+const AUDIO_EXTENSIONS = new Set([
+  '.mp3', '.wav', '.ogg', '.flac', '.m4a', '.aac', '.wma', '.webm',
+])
+
+function isAudioFile(file: File): boolean {
+  const ext = '.' + file.name.split('.').pop()?.toLowerCase()
+  return AUDIO_EXTENSIONS.has(ext) || file.type.startsWith('audio/')
+}
+
+// ---------------------------------------------------------------------------
+// File/Directory picker
+// ---------------------------------------------------------------------------
+
 /**
- * Open a native file picker and import selected audio files.
- *
- * Uses extension-based accept (no MIME wildcard) to avoid issues
- * with single-file restriction on iOS/mobile browsers.
- * Detects cancel via window focus event.
- *
- * Usage:
- *   ```ts
- *   const result = await openFilePicker((p) => setProgress(p))
- *   ```
+ * Shared logic for file/directory picker.
  */
-export function openFilePicker(): Promise<FileList | null> {
+function createFilePicker(options: {
+  multiple: boolean
+  accept?: string
+  directory?: boolean
+}): Promise<FileList | null> {
   return new Promise((resolve) => {
     const input = document.createElement('input')
     input.type = 'file'
-    // Use only extensions (no audio/* MIME wildcard) to avoid
-    // single-file restriction on iOS and some mobile browsers
-    input.accept = '.mp3,.wav,.ogg,.flac,.m4a,.aac,.wma,.webm'
-    input.multiple = true
+    input.multiple = options.multiple
+
+    if (options.directory) {
+      // webkitdirectory is Chrome/Edge/Samsung-specific (not in standard TS types)
+      ;(input as HTMLInputElement & { webkitdirectory: boolean }).webkitdirectory = true
+      // accept doesn't work with webkitdirectory, we filter after selection
+    } else if (options.accept) {
+      input.accept = options.accept
+    }
 
     let resolved = false
 
-    // When files are selected (works with multi-select on all browsers)
     input.addEventListener('change', () => {
       if (resolved) return
       resolved = true
@@ -296,8 +312,7 @@ export function openFilePicker(): Promise<FileList | null> {
       resolve(input.files)
     })
 
-    // Detect cancellation: when the window regains focus after
-    // the file dialog closes without selecting files
+    // Detect cancellation via window focus after dialog closes
     const onFocus = () => {
       setTimeout(() => {
         if (!resolved) {
@@ -311,6 +326,40 @@ export function openFilePicker(): Promise<FileList | null> {
 
     input.click()
   })
+}
+
+/**
+ * Open a native file picker to select individual audio files.
+ *
+ * Uses extension-based accept to avoid single-file restriction on iOS.
+ * Supports multi-file selection on desktop and mobile.
+ */
+export function openFilePicker(): Promise<FileList | null> {
+  return createFilePicker({
+    multiple: true,
+    accept: '.mp3,.wav,.ogg,.flac,.m4a,.aac,.wma,.webm',
+  })
+}
+
+/**
+ * Open a native directory picker to import an entire folder of audio files.
+ *
+ * Uses the webkitdirectory attribute (supported on Chrome, Edge, Samsung,
+ * and most Android browsers). Filters to only audio files after selection.
+ */
+export function openFolderPicker(): Promise<FileList | null> {
+  return createFilePicker({
+    multiple: true,
+    directory: true,
+  })
+}
+
+/**
+ * Filter a FileList to only audio files.
+ * Used after folder selection since webkitdirectory doesn't support accept.
+ */
+export function filterAudioFiles(files: FileList | File[]): File[] {
+  return Array.from(files).filter(isAudioFile)
 }
 
 // ---------------------------------------------------------------------------

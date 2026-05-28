@@ -99,12 +99,26 @@ export function PlaylistView() {
             }
           />
           {!searchQuery && (
-            <ImportButton
-              variant="primary"
-              block
-              label="Choose Music Files"
-              onImportComplete={handleImportComplete}
-            />
+            <div className="flex flex-col sm:flex-row gap-sp-3 w-full max-w-sm">
+              <div className="flex-1">
+                <ImportButton
+                  variant="primary"
+                  block
+                  label="Choose Files"
+                  mode="files"
+                  onImportComplete={handleImportComplete}
+                />
+              </div>
+              <div className="flex-1">
+                <ImportButton
+                  variant="glass"
+                  block
+                  label="Import Folder"
+                  mode="folder"
+                  onImportComplete={handleImportComplete}
+                />
+              </div>
+            </div>
           )}
         </div>
       </div>
