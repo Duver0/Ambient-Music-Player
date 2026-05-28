@@ -44,9 +44,9 @@
 | **PWA Compliance** | pwa-agent | — | — | — | performance-agent |
 | **Performance** | performance-agent | — | — | ALL agents | — |
 | **Bundle Size** | performance-agent | architecture-agent | deployment-agent | — | — |
-| **Mobile UX** | mobile-ux-agent | — | ui-agent | motion-agent | — |
-| **Safe Areas** | mobile-ux-agent | — | ui-agent | — | — |
-| **Touch Targets** | mobile-ux-agent | accessibility-agent | ui-agent | — | — |
+| **Mobile UX** | mobile-ux-agent | **mobile-ux-agent** (VETO) | ui-agent | motion-agent | — |
+| **Safe Areas** | mobile-ux-agent | **mobile-ux-agent** (VETO) | ui-agent | — | — |
+| **Touch Targets** | mobile-ux-agent | **mobile-ux-agent** (VETO), accessibility-agent | ui-agent | — | — |
 | **Accessibility** | accessibility-agent | — | ui-agent | frontend-agent | — |
 | **Color Contrast** | accessibility-agent | design-system-agent | ui-agent | — | — |
 | **Keyboard Nav** | accessibility-agent | — | frontend-agent | — | — |
@@ -84,10 +84,13 @@
 ### mobile-ux-agent can VETO:
 
 1. Any touch target < 44x44px
-2. Any layout that ignores safe areas
-3. Any gesture that conflicts with system gestures
+2. Any layout that ignores safe areas (notch, home indicator, dynamic toolbar)
+3. Any gesture that conflicts with system gestures (iOS back swipe, control center, notification center)
+4. Any navigation that places primary actions outside thumb zone
+5. Any interaction requiring precision tapping without mobile-optimized affordances
+6. Any layout that doesn't handle iOS dynamic toolbar viewport changes
 
-**Appeal:** architecture-agent (if desktop-only feature)
+**Appeal:** architecture-agent (if feature is desktop-only and has no mobile equivalent)
 
 ### architecture-agent can VETO:
 

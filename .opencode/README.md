@@ -136,21 +136,31 @@
 
 | Tier | Name | Interacts with | Count |
 |------|------|---------------|-------|
-| **Tier 1** | **Primary Agents** | **YOU (the human)** → assign tasks directly | 6 |
+| **Tier 0** | **Orchestrator** | **YOU (the human)** — single point of contact | 1 |
+| **Tier 1** | **Primary Agents** | orchestrator-agent delegates to them | 6 |
 | **Tier 2** | **Sub-Agents** | Only their parent Tier 1 agent | 5 |
 | **Tier 3** | **Cross-cutting Auditors** | All tiers (audit, veto, review) | 5 |
 
-**Rule:** You never talk to Tier 2 or Tier 3 agents directly. You talk to their parent Tier 1 agent, who delegates.
+**Rules:**
+- You talk ONLY to the orchestrator-agent (Tier 0). It routes tasks to Tier 1 agents.
+- Tier 1 agents receive tasks from the orchestrator, not from you directly.
+- You never talk to Tier 2 or Tier 3 agents directly.
 
 ---
 
 ## Agent Overview
 
-### Tier 1 — You talk to THESE agents
+### Tier 0 — Orchestrator (Your single contact)
 
-| Agent | You say | It delegates to |
-|-------|---------|-----------------|
-| [architecture-agent](./agents/architecture-agent.md) | "Set up the project structure" | — |
+| Agent | You say | It routes to |
+|-------|---------|-------------|
+| [orchestrator-agent](./agents/orchestrator-agent.md) | "Build the music player" | Appropriate Tier 1 agents |
+
+### Tier 1 — Primary Agents (orchestrator delegates to them)
+
+| Agent | orchestrator says | It delegates to |
+|-------|------------------|-----------------|
+| [architecture-agent](./agents/architecture-agent.md) | "Set up project structure" | — |
 | [frontend-agent](./agents/frontend-agent.md) | "Build the player page" | state-management-agent, ui-agent |
 | [design-system-agent](./agents/design-system-agent.md) | "Define the dark theme" | — |
 | [audio-engine-agent](./agents/audio-engine-agent.md) | "Implement audio playback" | — |
@@ -163,7 +173,7 @@
 |-------|-----------|---------|
 | [ui-agent](./agents/ui-agent.md) | frontend-agent | Visual layer |
 | [motion-agent](./agents/motion-agent.md) | ui-agent | Animation |
-| [mobile-ux-agent](./agents/mobile-ux-agent.md) | ui-agent | Mobile polish |
+| [mobile-ux-agent](./agents/mobile-ux-agent.md) | ui-agent | Mobile polish (has VETO power on mobile) |
 | [state-management-agent](./agents/state-management-agent.md) | frontend-agent | Stores |
 | [offline-storage-agent](./agents/offline-storage-agent.md) | pwa-agent | Data persistence |
 
@@ -177,30 +187,42 @@
 | [code-review-agent](./agents/code-review-agent.md) | All tiers | Advisory |
 | [refactor-agent](./agents/refactor-agent.md) | All tiers | Standard |
 
+**Note:** mobile-ux-agent (Tier 2) also has **VETO power** on mobile-specific concerns (touch targets, safe areas, gesture conflicts). See [mobile-ux-agent.md](./agents/mobile-ux-agent.md) and [authority.md](./rules/authority.md).
+
 ---
 
 ## How You Interact With Agents
 
 ```
-YOU: "Hey frontend-agent, build the music player page"
+YOU: "Hey orchestrator, build the music player page"
   │
   ▼
-frontend-agent (Tier 1) receives your task
+orchestrator-agent (Tier 0) receives your task → decomposes → routes
   │
-  ├── Delegates to state-management-agent (Tier 2): "Design the player store"
-  │     └── state-management-agent returns store files
+  ├──→ architecture-agent (Tier 1): "Define project structure"
   │
-  ├── Delegates to ui-agent (Tier 2): "Style the player"
-  │     ├── ui-agent delegates to motion-agent (Tier 2): "Add animations"
-  │     └── ui-agent delegates to mobile-ux-agent (Tier 2): "Mobile polish"
+  ├──→ design-system-agent (Tier 1): "Define visual tokens"
   │
-  ├── Implements feature logic
+  ├──→ audio-engine-agent (Tier 1): "Implement audio engine"
   │
-  ├── Sends to accessibility-agent (Tier 3): "Audit this"
-  ├── Sends to performance-agent (Tier 3): "Audit this"
-  ├── Sends to testing-agent (Tier 3): "Test this"
+  ├──→ frontend-agent (Tier 1): "Build the player page"
+  │     │
+  │     ├── Delegates to state-management-agent (Tier 2): "Design stores"
+  │     └── Delegates to ui-agent (Tier 2): "Style the player"
+  │           ├── ui-agent → motion-agent (Tier 2): "Add animations"
+  │           └── ui-agent → mobile-ux-agent (Tier 2): "Mobile polish + VETO"
   │
-  └── Returns result to YOU
+  ├──→ pwa-agent (Tier 1): "Configure PWA + offline"
+  │     └── Delegates to offline-storage-agent (Tier 2): "Data layer"
+  │
+  ├──→ orchestrator requests audits:
+  │     ├── accessibility-agent (Tier 3): "Audit a11y" (can VETO)
+  │     ├── performance-agent (Tier 3): "Audit perf" (can VETO)
+  │     ├── mobile-ux-agent (Tier 2): "Audit mobile UX" (can VETO)
+  │     ├── testing-agent (Tier 3): "Test feature"
+  │     └── code-review-agent (Tier 3): "Review code quality"
+  │
+  └── Returns consolidated result to YOU
 ```
 
 See [rules/hierarchy.md](./rules/hierarchy.md) for detailed tier rules.
@@ -209,22 +231,26 @@ See [rules/hierarchy.md](./rules/hierarchy.md) for detailed tier rules.
 
 ## Quickstart Workflow (Human View)
 
-What YOU say to each Tier 1 agent:
+What YOU say to the orchestrator-agent (Tier 0) — it routes everything:
 
 ```
-1. architecture-agent     → "Set up src/ structure and dependencies"
-2. design-system-agent    → "Define the visual theme and tokens"
-3. pwa-agent              → "Configure PWA and offline strategy"
-4. deployment-agent       → "Set up build and CI/CD"
-5. frontend-agent         → "Build the player page" *
-6. audio-engine-agent     → "Implement audio playback engine"
-7. performance-agent      → "Audit performance" (Tier 3)
-8. accessibility-agent    → "Audit accessibility" (Tier 3)
+YOU → orchestrator-agent: "Build the Ambient Music Player"
+  │
+  orchestrator routes in order:
+  1. architecture-agent     → "Set up src/ structure and dependencies"
+  2. design-system-agent    → "Define the visual theme and tokens"
+  3. pwa-agent              → "Configure PWA and offline strategy"
+  4. deployment-agent       → "Set up build and CI/CD"
+  5. frontend-agent         → "Build the player page" *
+  6. audio-engine-agent     → "Implement audio playback engine"
+  7. performance-agent      → "Audit performance" (Tier 3, can VETO)
+  8. accessibility-agent    → "Audit accessibility" (Tier 3, can VETO)
+  9. mobile-ux-agent        → "Audit mobile UX" (Tier 2, can VETO)
 ```
 
 *frontend-agent internally delegates:
   → state-management-agent (stores)
-  → ui-agent (visuals) → motion-agent (animation) → mobile-ux-agent (mobile)
+  → ui-agent (visuals) → motion-agent (animation) → mobile-ux-agent (mobile polish + VETO)
 
 ---
 

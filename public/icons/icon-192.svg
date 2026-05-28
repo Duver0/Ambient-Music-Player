@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="bg-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a0a0a"/>
+      <stop offset="100%" stop-color="#050505"/>
+    </linearGradient>
+    <linearGradient id="wave-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="32" fill="url(#bg-grad)"/>
+  <!-- Sound wave bars -->
+  <rect x="52" y="76" width="12" height="40" rx="6" fill="url(#wave-grad)" opacity="0.6">
+    <animate attributeName="height" values="40;60;40" dur="1.5s" repeatCount="indefinite"/>
+    <animate attributeName="y" values="76;66;76" dur="1.5s" repeatCount="indefinite"/>
+  </rect>
+  <rect x="74" y="64" width="12" height="64" rx="6" fill="url(#wave-grad)" opacity="0.8">
+    <animate attributeName="height" values="64;84;64" dur="1.2s" repeatCount="indefinite"/>
+    <animate attributeName="y" values="64;54;64" dur="1.2s" repeatCount="indefinite"/>
+  </rect>
+  <rect x="96" y="52" width="12" height="88" rx="6" fill="url(#wave-grad)">
+    <animate attributeName="height" values="88;72;88" dur="1s" repeatCount="indefinite"/>
+    <animate attributeName="y" values="52;60;52" dur="1s" repeatCount="indefinite"/>
+  </rect>
+  <rect x="118" y="64" width="12" height="64" rx="6" fill="url(#wave-grad)" opacity="0.8">
+    <animate attributeName="height" values="64;48;64" dur="1.3s" repeatCount="indefinite"/>
+    <animate attributeName="y" values="64;72;64" dur="1.3s" repeatCount="indefinite"/>
+  </rect>
+  <rect x="140" y="76" width="12" height="40" rx="6" fill="url(#wave-grad)" opacity="0.6">
+    <animate attributeName="height" values="40;56;40" dur="1.4s" repeatCount="indefinite"/>
+    <animate attributeName="y" values="76;68;76" dur="1.4s" repeatCount="indefinite"/>
+  </rect>
+  <!-- Glow circle behind waves -->
+  <circle cx="96" cy="96" r="60" fill="#6366f1" opacity="0.08"/>
+  <circle cx="96" cy="96" r="40" fill="#8b5cf6" opacity="0.06"/>
+</svg>

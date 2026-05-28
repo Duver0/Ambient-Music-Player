@@ -35,20 +35,6 @@
 
 **Rule:** Tier 1 agents receive tasks from the orchestrator, never from the human directly. They own their domain and may delegate sub-tasks to Tier 2.
 
-### Tier 1 — Primary Agents (Human Interface)
-
-| Property | Value |
-|----------|-------|
-| Interacts with | **Human (YOU)** |
-| Can delegate to | Tier 2 sub-agents |
-| Can request audit from | Tier 3 auditors |
-| Reports to | Human |
-| Task source | Human directly |
-
-**Agents:** architecture-agent, frontend-agent, design-system-agent, audio-engine-agent, pwa-agent, deployment-agent
-
-**Rule:** Tier 1 agents are the ONLY entry point for human task assignment. If you want something done, you tell a Tier 1 agent.
-
 ### Tier 2 — Sub-Agents (Agent Interface Only)
 
 | Property | Value |

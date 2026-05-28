@@ -1,0 +1,238 @@
+@import "tailwindcss";
+
+@theme {
+  /* ══════════════════════════════════════════════════════════════
+     COLOR SYSTEM — Dark-by-default ambient palette
+     ══════════════════════════════════════════════════════════════ */
+
+  /* ── Background Surfaces ── */
+  --color-ambient-950: #050505;
+  --color-ambient-900: #0a0a0a;
+  --color-ambient-850: #0f0f0f;
+  --color-ambient-800: #141414;
+  --color-ambient-750: #1a1a1a;
+  --color-ambient-700: #1e1e1e;
+
+  /* ── Glass Surfaces (translucent overlays) ── */
+  --color-glass-50: rgba(255, 255, 255, 0.02);
+  --color-glass-100: rgba(255, 255, 255, 0.04);
+  --color-glass-200: rgba(255, 255, 255, 0.06);
+  --color-glass-300: rgba(255, 255, 255, 0.08);
+  --color-glass-400: rgba(255, 255, 255, 0.12);
+  --color-glass-500: rgba(255, 255, 255, 0.2);
+
+  /* ── Accent Colors ── */
+  --color-accent-primary: #6366f1;
+  --color-accent-warm: #f59e0b;
+  --color-accent-cool: #06b6d4;
+  --color-accent-glow: #8b5cf6;
+  --color-accent-rose: #f43f5e;
+
+  /* ── Text Hierarchy ── */
+  --color-text-primary: rgba(255, 255, 255, 0.95);
+  --color-text-secondary: rgba(255, 255, 255, 0.65);
+  --color-text-tertiary: rgba(255, 255, 255, 0.4);
+  --color-text-disabled: rgba(255, 255, 255, 0.2);
+  --color-text-inverse: #0a0a0a;
+
+  /* ── Utility Colors ── */
+  --color-scrim: rgba(0, 0, 0, 0.6);
+  --color-scrim-light: rgba(0, 0, 0, 0.3);
+  --color-scrim-glass: rgba(0, 0, 0, 0.8);
+
+  /* ══════════════════════════════════════════════════════════════
+     TYPOGRAPHY — Font families
+     ══════════════════════════════════════════════════════════════ */
+
+  --font-display: "SF Pro Display", "Inter", system-ui, -apple-system,
+    sans-serif;
+  --font-body: "SF Pro Text", "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "SF Mono", "JetBrains Mono", "Cascadia Code", monospace;
+  --font-numeric: "SF Mono", "JetBrains Mono", monospace;
+
+  /* ══════════════════════════════════════════════════════════════
+     SPACING SCALE — 4px grid system (sp-* tokens)
+     ══════════════════════════════════════════════════════════════ */
+
+  --spacing-sp-1: 4px;
+  --spacing-sp-2: 8px;
+  --spacing-sp-3: 12px;
+  --spacing-sp-4: 16px;
+  --spacing-sp-5: 20px;
+  --spacing-sp-6: 24px;
+  --spacing-sp-8: 32px;
+  --spacing-sp-10: 40px;
+  --spacing-sp-12: 48px;
+  --spacing-sp-14: 56px;
+  --spacing-sp-16: 64px;
+  --spacing-sp-20: 80px;
+  --spacing-sp-24: 96px;
+
+  /* ══════════════════════════════════════════════════════════════
+     BLUR SYSTEM — Depth through blur, not shadows
+     ══════════════════════════════════════════════════════════════ */
+
+  --blur-none: 0px;
+  --blur-sm: 4px;
+  --blur-default: 8px;
+  --blur-glass: 16px;
+  --blur-heavy: 24px;
+  --blur-xl: 32px;
+  --blur-2xl: 40px;
+  --blur-3xl: 48px;
+
+  /* ══════════════════════════════════════════════════════════════
+     BOX SHADOWS — Limited use (glow + subtle separation only)
+     ══════════════════════════════════════════════════════════════ */
+
+  --shadow-ambient: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 40px rgba(99, 102, 241, 0.2);
+  --shadow-glass: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+  /* ══════════════════════════════════════════════════════════════
+     GRADIENT SYSTEM — Background images
+     ══════════════════════════════════════════════════════════════ */
+
+  --background-image-gradient-base: linear-gradient(
+    180deg,
+    #0a0a0a 0%,
+    #050505 100%
+  );
+  --background-image-gradient-player: linear-gradient(
+    180deg,
+    #1a1a2e 0%,
+    #0a0a0a 100%
+  );
+  --background-image-gradient-focus: linear-gradient(
+    180deg,
+    #1a1a0a 0%,
+    #0a0a0a 100%
+  );
+  --background-image-gradient-ambient: radial-gradient(
+    ellipse at 50% 0%,
+    rgba(99, 102, 241, 0.08) 0%,
+    transparent 70%
+  );
+  --background-image-gradient-glow: radial-gradient(
+    circle at 50% 50%,
+    rgba(99, 102, 241, 0.12) 0%,
+    transparent 60%
+  );
+  --background-image-gradient-scrim: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+
+  /* ══════════════════════════════════════════════════════════════
+     Z-INDEX SCALE — Named layers for stacking context
+     ══════════════════════════════════════════════════════════════ */
+
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-nav: 20;
+  --z-dropdown: 30;
+  --z-sheet: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+  --z-tooltip: 70;
+  --z-loader: 80;
+  --z-max: 90;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BASE STYLES
+   ══════════════════════════════════════════════════════════════ */
+
+:root {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+
+  /* iOS safe area fallbacks */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+}
+
+*,
+*::before,
+*::after {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+
+  /* Default theme */
+  background-color: var(--color-ambient-900);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+
+  /* Prevent iOS rubber-banding */
+  overscroll-behavior: none;
+
+  /* Prevent text selection on UI elements */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Allow text selection in content areas */
+[contenteditable],
+input,
+textarea {
+  -webkit-user-select: auto;
+  user-select: auto;
+}
+
+#root {
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* Prevent pull-to-refresh on main view */
+main {
+  overscroll-behavior: contain;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   GLASS UTILITY CLASSES
+   ══════════════════════════════════════════════════════════════ */
+
+.glass-default {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-elevated {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
+}
