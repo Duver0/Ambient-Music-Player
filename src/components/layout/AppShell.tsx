@@ -1,7 +1,8 @@
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useEffect, useRef } from 'react'
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { useUIStore, type ActiveTab } from '@/stores/ui-store'
 import { usePlayerStore } from '@/stores/player-store'
+import { restoreImportedAudio } from '@/services/import/track-importer'
 import { PageShell } from './PageShell'
 
 const BottomNav = lazy(() => import('./BottomNav').then((m) => ({ default: m.BottomNav })))
@@ -30,6 +31,14 @@ export function AppShell() {
 
   const location = useLocation()
   const navigate = useNavigate()
+
+  // Restore imported audio blob URLs on app start
+  const restoredRef = useRef(false)
+  useEffect(() => {
+    if (restoredRef.current) return
+    restoredRef.current = true
+    restoreImportedAudio()
+  }, [])
 
   // Sync activeTab with URL on route changes
   useEffect(() => {

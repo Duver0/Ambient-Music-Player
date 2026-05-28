@@ -60,6 +60,14 @@ export interface DBArtworkCache {
   updatedAt: number
 }
 
+/** Raw audio binary data for an imported track (persisted for offline playback). */
+export interface DBTrackAudio {
+  trackId: string
+  data: ArrayBuffer
+  mimeType: string
+  importedAt: number
+}
+
 /** Analytics / telemetry event. */
 export interface DBAnalyticsEvent {
   id?: number
@@ -89,6 +97,7 @@ export interface AppDatabase {
   sessions: Dexie.Table<DBSession, number>
   artwork: Dexie.Table<DBArtworkCache, string>
   analytics: Dexie.Table<DBAnalyticsEvent, number>
+  trackAudio: Dexie.Table<DBTrackAudio, string>
 }
 
 let _db: AppDatabase | null = null
@@ -123,11 +132,12 @@ async function createDatabase(DexieClass: typeof Dexie): Promise<AppDatabase> {
     sessions!: Dexie.Table<DBSession, number>
     artwork!: Dexie.Table<DBArtworkCache, string>
     analytics!: Dexie.Table<DBAnalyticsEvent, number>
+    trackAudio!: Dexie.Table<DBTrackAudio, string>
 
     constructor() {
       super('AmbientPlayer')
 
-      this.version(1).stores({
+      this.version(2).stores({
         tracks: '&id, title, artist, album, duration, addedAt, lastPlayedAt',
         playlists: '&id, name, &slug, createdAt, updatedAt',
         playlistTracks: '[playlistId+trackId], playlistId, trackId, position',
@@ -135,6 +145,7 @@ async function createDatabase(DexieClass: typeof Dexie): Promise<AppDatabase> {
         sessions: '++id, type, startedAt, endedAt, duration',
         artwork: '&trackId',
         analytics: '++id, event, timestamp',
+        trackAudio: '&trackId',
       })
     }
   }

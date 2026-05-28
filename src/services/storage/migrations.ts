@@ -11,7 +11,7 @@ const DATA_VERSION_KEY = 'ambient-data-version'
  * Increment when schema or data format changes.
  * Stored in localStorage, separate from Dexie's internal schema version.
  */
-const CURRENT_DATA_VERSION = 1
+const CURRENT_DATA_VERSION = 2
 
 // ---------------------------------------------------------------------------
 // Migration registry
@@ -37,6 +37,16 @@ const migrations: Migration[] = [
       // Schema v1 is defined in database.ts.
       // No data transformations needed for fresh install.
       // This migration exists so the data-version tracking is consistent.
+    },
+  },
+  // v2: Added trackAudio table for imported audio binary data
+  {
+    from: 1,
+    to: 2,
+    migrate: async () => {
+      // Dexie handles the schema change (new trackAudio table) automatically.
+      // No data transformation needed — the table starts empty.
+      // Existing tracks, playlists, and settings are unaffected.
     },
   },
 ]

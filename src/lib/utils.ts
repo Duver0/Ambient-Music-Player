@@ -72,3 +72,25 @@ export function throttle<T extends (...args: unknown[]) => unknown>(
     }
   }
 }
+
+/**
+ * Generate a URL-safe random ID of specified length.
+ * Uses crypto.randomUUID() when available, falls back to Math.random().
+ */
+export function nanoid(length: number = 21): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-'
+  const bytes = new Uint8Array(length)
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    crypto.getRandomValues(bytes)
+  } else {
+    // Fallback for environments without crypto
+    for (let i = 0; i < length; i++) {
+      bytes[i] = Math.floor(Math.random() * 256)
+    }
+  }
+  let result = ''
+  for (let i = 0; i < length; i++) {
+    result += chars[bytes[i] % chars.length]
+  }
+  return result
+}

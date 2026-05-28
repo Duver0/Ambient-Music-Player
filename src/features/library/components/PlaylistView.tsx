@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useTracks } from '@/hooks/useTracks'
 import { usePlayer } from '@/hooks/usePlayer'
 import { useUIStore } from '@/stores/ui-store'
@@ -8,7 +8,9 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Button } from '@/components/ui/Button'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { PlaylistIcon } from '@/components/ui/icons/PlaylistIcon'
+import { ImportButton } from './ImportButton'
 import type { Track } from '@/types/track'
+import type { ImportResult } from '@/services/import/track-importer'
 
 type SortField = 'title' | 'artist' | 'addedAt' | 'lastPlayedAt' | 'duration'
 
@@ -25,10 +27,12 @@ const SORT_OPTIONS: { value: SortField; label: string }[] = [
  *
  * Displays all tracks with search filtering and sort controls.
  * Delegates track rendering to TrackRow dumb components.
+ * Shows ImportButton when no tracks are present.
  */
 export function PlaylistView() {
   const [sortBy, setSortBy] = useState<SortField>('addedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [refreshKey, setRefreshKey] = useState(0)
   const searchQuery = useUIStore((s) => s.searchQuery)
   const setSearchQuery = useUIStore((s) => s.setSearchQuery)
 
@@ -56,6 +60,11 @@ export function PlaylistView() {
     }
   }
 
+  const handleImportComplete = useCallback((_result: ImportResult) => {
+    // Force refresh by incrementing key
+    setRefreshKey((k) => k + 1)
+  }, [])
+
   // ── Loading state ─────────────────────────────────────────────────────
 
   if (isLoading) {
@@ -66,7 +75,7 @@ export function PlaylistView() {
     )
   }
 
-  // ── Empty state ───────────────────────────────────────────────────────
+  // ── Empty state (no tracks) ───────────────────────────────────────────
 
   if (tracks.length === 0) {
     return (
@@ -79,25 +88,33 @@ export function PlaylistView() {
             placeholder="Search tracks..."
           />
         </div>
-        <div className="flex-1">
+        <div className="flex-1 flex flex-col items-center justify-center px-sp-6 gap-sp-6">
           <EmptyState
             icon={<PlaylistIcon size={48} />}
             title={searchQuery ? 'No Results Found' : 'No Tracks Yet'}
             description={
               searchQuery
                 ? 'Try a different search term'
-                : 'Import your music files to get started'
+                : 'Select audio files from your device to get started'
             }
           />
+          {!searchQuery && (
+            <ImportButton
+              variant="primary"
+              block
+              label="Choose Music Files"
+              onImportComplete={handleImportComplete}
+            />
+          )}
         </div>
       </div>
     )
   }
 
-  // ── Render ────────────────────────────────────────────────────────────
+  // ── Render (tracks available) ─────────────────────────────────────────
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" key={refreshKey}>
       {/* Search Bar */}
       <div className="px-sp-4 pt-sp-4 pb-sp-2">
         <SearchBar
@@ -108,8 +125,8 @@ export function PlaylistView() {
         />
       </div>
 
-      {/* Sort Options */}
-      <div className="flex gap-sp-2 px-sp-4 pb-sp-3 overflow-x-auto">
+      {/* Sort Options + Import button */}
+      <div className="flex items-center gap-sp-2 px-sp-4 pb-sp-3 overflow-x-auto">
         {SORT_OPTIONS.map((option) => (
           <Button
             key={option.value}
@@ -125,6 +142,13 @@ export function PlaylistView() {
             )}
           </Button>
         ))}
+        <div className="ml-auto shrink-0">
+          <ImportButton
+            variant="glass"
+            label="+ Add"
+            onImportComplete={handleImportComplete}
+          />
+        </div>
       </div>
 
       {/* Track List */}
